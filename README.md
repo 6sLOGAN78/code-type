@@ -51,7 +51,11 @@ A web application for speed coding in **C++20**, designed with the clean aesthet
 You can open `index.html` directly in any web browser, or run the local server:
 
 ```bash
-cd /home/logan78/Desktop/cpp-type
+# Clone the repository
+git clone https://github.com/6sLOGAN78/cpp-type.git
+cd cpp-type
+
+# Start the server
 python3 server.py
 ```
 
