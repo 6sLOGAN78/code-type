@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple static HTTP server to launch cppType locally.
+Simple static HTTP server to launch codeType locally.
 """
 import http.server
 import socketserver
@@ -24,7 +24,7 @@ def main():
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         url = f"http://localhost:{PORT}"
         print("=" * 60)
-        print(f"🚀 cppType is running at: {url}")
+        print(f"🚀 codeType is running at: {url}")
         print(f"📁 Root directory: {os.getcwd()}")
         print("⌨️  Press Ctrl+C to stop the server.")
         print("=" * 60)

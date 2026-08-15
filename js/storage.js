@@ -1,9 +1,16 @@
 /**
- * cppType - Persistent LocalStorage Manager
+ * codeType - Persistent LocalStorage Manager
  * Stores multi-language test history, user preferences, custom snippets, and lifetime analytics.
  */
 
 const STORAGE_KEYS = {
+  HISTORY: "codetype_history_v1",
+  SETTINGS: "codetype_settings_v1",
+  CUSTOM_SNIPPETS: "codetype_custom_snippets_v1",
+  STATS: "codetype_lifetime_stats_v1"
+};
+
+const LEGACY_STORAGE_KEYS = {
   HISTORY: "cpptype_history_v1",
   SETTINGS: "cpptype_settings_v1",
   CUSTOM_SNIPPETS: "cpptype_custom_snippets_v1",
@@ -38,12 +45,25 @@ const DEFAULT_SETTINGS = {
 
 class StorageManager {
   constructor() {
+    this._migrateLegacyData();
     this.settings = this.loadSettings();
+  }
+
+  _migrateLegacyData() {
+    try {
+      Object.keys(STORAGE_KEYS).forEach(k => {
+        const legacyKey = LEGACY_STORAGE_KEYS[k];
+        const newKey = STORAGE_KEYS[k];
+        if (!localStorage.getItem(newKey) && localStorage.getItem(legacyKey)) {
+          localStorage.setItem(newKey, localStorage.getItem(legacyKey));
+        }
+      });
+    } catch (e) {}
   }
 
   loadSettings() {
     try {
-      const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+      const data = localStorage.getItem(STORAGE_KEYS.SETTINGS) || localStorage.getItem(LEGACY_STORAGE_KEYS.SETTINGS);
       if (data) {
         return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
       }

@@ -1,5 +1,5 @@
 /**
- * cppType - High Performance Canvas Chart Renderer
+ * codeType - High Performance Canvas Chart Renderer
  * Custom lightweight Monkeytype-style dual-axis chart.
  * Zero external dependencies (no heavy bundle), ultra-responsive, retina-crisp.
  */

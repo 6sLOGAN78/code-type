@@ -1,4 +1,4 @@
-# cppType ⚡ Multi-Language Speed Coding Test
+# codeType ⚡ Multi-Language Speed Coding Test
 
 A modern web application for speed coding in **C++20**, **Python 3.12**, **Go 1.22**, **CUDA C++**, and **Rust**, designed with the clean aesthetics and warm ergonomics of **Monkeytype**.
 
@@ -51,8 +51,8 @@ You can open `index.html` directly in any web browser, or run the local server:
 
 ```bash
 # Clone the repository
-git clone https://github.com/6sLOGAN78/cpp-type.git
-cd cpp-type
+git clone https://github.com/6sLOGAN78/code-type.git
+cd code-type
 
 # Start the server
 python3 server.py

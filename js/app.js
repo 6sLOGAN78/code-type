@@ -1,10 +1,10 @@
 /**
- * cppType - Main Multi-Language Application Controller
+ * codeType - Main Multi-Language Application Controller
  * Handles UI views, keyboard routing, language switching (C++, Python, Go, CUDA, Rust),
  * theme management, modals, result dashboard rendering, and history views.
  */
 
-class CppTypeApp {
+class CodeTypeApp {
   constructor() {
     this.storage = storage;
     this.sound = soundManager;
@@ -465,7 +465,7 @@ class CppTypeApp {
 📊 Consistency: ${r.consistency}%
 ⏱️ Time: ${r.duration}s
 💻 Snippet: ${r.snippetTitle} (${langCfg.name} • ${r.category})
-Try Speed Coding at cppType!`;
+Try Speed Coding at codeType!`;
 
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById("btn-copy-result");
@@ -542,7 +542,7 @@ Try Speed Coding at cppType!`;
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.storage.exportData());
       const downloadAnchor = document.createElement("a");
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `cpptype_backup_${Date.now()}.json`);
+      downloadAnchor.setAttribute("download", `codetype_backup_${Date.now()}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -729,5 +729,5 @@ Try Speed Coding at cppType!`;
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
-  window.app = new CppTypeApp();
+  window.app = new CodeTypeApp();
 });
