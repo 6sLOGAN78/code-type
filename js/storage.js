@@ -1,6 +1,6 @@
 /**
  * cppType - Persistent LocalStorage Manager
- * Stores test history, user preferences, custom snippets, and lifetime analytics.
+ * Stores multi-language test history, user preferences, custom snippets, and lifetime analytics.
  */
 
 const STORAGE_KEYS = {
@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_SETTINGS = {
+  language: "cpp", // "cpp", "python", "go", "cuda", "rust"
   theme: "serika-dark",
   fontFamily: "JetBrains Mono",
   fontSize: 18,
@@ -20,7 +21,7 @@ const DEFAULT_SETTINGS = {
   errorSound: true,
   blindMode: false,
   quickRestart: "tab", // "tab", "esc", "enter"
-  paceCaret: "off", // "off", "pb", "custom"
+  paceCaret: "off",
   paceCaretWpm: 75,
   indentSpaces: 2,
   autoIndent: true,
@@ -79,6 +80,7 @@ class StorageManager {
     const resultEntry = {
       id: "res_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6),
       timestamp: Date.now(),
+      language: result.language || this.settings.language || "cpp",
       ...result
     };
     history.unshift(resultEntry); // Newest first
@@ -197,11 +199,15 @@ class StorageManager {
     return stats;
   }
 
-  getCustomSnippets() {
+  getCustomSnippets(langFilter = null) {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.CUSTOM_SNIPPETS);
       if (data) {
-        return JSON.parse(data);
+        let list = JSON.parse(data);
+        if (langFilter && langFilter !== "all") {
+          list = list.filter(s => (s.language || "cpp") === langFilter);
+        }
+        return list;
       }
     } catch (e) {}
     return [];
@@ -211,8 +217,9 @@ class StorageManager {
     const snippets = this.getCustomSnippets();
     const entry = {
       id: "custom_" + Date.now(),
-      title: snippet.title || "Custom C++ Snippet",
+      title: snippet.title || "Custom Snippet",
       code: snippet.code,
+      language: snippet.language || this.settings.language || "cpp",
       category: "custom",
       difficulty: "custom",
       createdAt: Date.now()

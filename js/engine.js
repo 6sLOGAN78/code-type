@@ -1,6 +1,6 @@
 /**
- * cppType - Core C++ Typing Engine
- * Handles character-by-character tracking, C++ syntax tokens,
+ * cppType - Core Multi-Language Typing Engine
+ * Handles character-by-character tracking, language-specific syntax tokens,
  * caret positioning, telemetry recording, indentation, and live metrics.
  */
 
@@ -22,6 +22,7 @@ class TypingEngine {
 
     // State
     this.snippet = null;
+    this.language = "cpp";
     this.characters = []; // Array of character objects
     this.currentIndex = 0;
     this.lineOffsets = [];
@@ -55,10 +56,11 @@ class TypingEngine {
     this.onKey = options.onKey || (() => {});
   }
 
-  loadSnippet(snippet, mode = "snippet", limit = 0) {
+  loadSnippet(snippet, mode = "snippet", limit = 0, language = "cpp") {
     this.reset();
     this.snippet = snippet;
     this.mode = mode; // "snippet", "time", "lines", "custom"
+    this.language = language || snippet.language || "cpp";
 
     let code = snippet.code;
 
@@ -99,7 +101,7 @@ class TypingEngine {
           char: line[c],
           line: l,
           col: c,
-          state: "pending", // "pending" | "correct" | "incorrect" | "extra"
+          state: "pending", // "pending" | "correct" | "incorrect"
           typed: null,
           isNewline: false
         });
@@ -154,7 +156,7 @@ class TypingEngine {
         span.innerHTML = "&nbsp;";
       } else if (charObj.char === "\t") {
         span.className += " tab-char";
-        span.innerHTML = "&nbsp;&nbsp;";
+        span.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;";
       } else {
         span.textContent = charObj.char;
       }
@@ -218,7 +220,7 @@ class TypingEngine {
     const span = this.container.querySelector(`.char[data-index="${this.currentIndex}"]`);
 
     if (char === targetObj.char) {
-      // Correct!
+      // Correct
       targetObj.state = "correct";
       targetObj.typed = char;
       this.correctKeystrokes++;
@@ -227,7 +229,7 @@ class TypingEngine {
       }
       soundManager.playKey();
     } else {
-      // Incorrect!
+      // Incorrect
       targetObj.state = "incorrect";
       targetObj.typed = char;
       this.incorrectKeystrokes++;
@@ -260,7 +262,7 @@ class TypingEngine {
       this.currentIndex++;
       soundManager.playKey();
 
-      // Auto-indent feature: if the next line begins with leading spaces, automatically fill or skip them
+      // Auto-indent: advance past leading indentation spaces on new line
       if (this.options.autoIndent) {
         this._autoSkipLeadingSpaces();
       }
@@ -308,18 +310,18 @@ class TypingEngine {
   _handleTabInput() {
     if (this.currentIndex >= this.characters.length) return;
     
-    // Tab simulates 2 or 4 spaces depending on target
     const targetObj = this.characters[this.currentIndex];
     if (targetObj.char === " ") {
-      // Type up to indentSpaces spaces
       const spacesToType = this.options.indentSpaces || 2;
       for (let s = 0; s < spacesToType; s++) {
         if (this.currentIndex < this.characters.length && this.characters[this.currentIndex].char === " ") {
           this._handleRegularCharInput(" ");
         }
       }
-    } else {
+    } else if (targetObj.char === "\t") {
       this._handleRegularCharInput("\t");
+    } else {
+      this._handleRegularCharInput(" ");
     }
   }
 
@@ -327,7 +329,6 @@ class TypingEngine {
     if (this.currentIndex <= 0) return;
 
     if (isWordModifier) {
-      // Delete word or token
       while (this.currentIndex > 0) {
         this.currentIndex--;
         const obj = this.characters[this.currentIndex];
@@ -337,7 +338,6 @@ class TypingEngine {
         if (span) {
           span.className = obj.isNewline ? "char pending newline-char" : "char pending";
         }
-        // Stop on whitespace boundaries
         if (this.currentIndex > 0 && this.characters[this.currentIndex - 1].char === " ") {
           break;
         }
@@ -353,7 +353,6 @@ class TypingEngine {
         span.className = targetObj.isNewline ? "char pending newline-char" : "char pending";
       }
 
-      // If previous chars were auto-indented spaces on line start, backspace past them
       while (this.currentIndex > 0) {
         const prev = this.characters[this.currentIndex - 1];
         const prevSpan = this.container.querySelector(`.char[data-index="${this.currentIndex - 1}"]`);
@@ -375,7 +374,6 @@ class TypingEngine {
     let targetSpan = this.container.querySelector(`.char[data-index="${this.currentIndex}"]`);
     
     if (!targetSpan) {
-      // Reached the end of text
       const lastSpan = this.container.querySelector(`.char[data-index="${this.characters.length - 1}"]`);
       if (lastSpan) {
         const rect = lastSpan.getBoundingClientRect();
@@ -395,7 +393,6 @@ class TypingEngine {
     this.caret.style.transform = `translate3d(${left}px, ${top}px, 0)`;
     this.caret.style.height = `${rect.height || 24}px`;
 
-    // Smooth line scrolling to keep current line visible in viewport
     if (this.options.smoothLineScroll) {
       const activeLineDiv = targetSpan.closest(".code-line");
       if (activeLineDiv) {
@@ -413,7 +410,6 @@ class TypingEngine {
     this.currentSecondErrors = 0;
     this.currentSecondKeystrokes = 0;
 
-    // Start per-second telemetry interval
     let elapsedSeconds = 0;
     this.secondInterval = setInterval(() => {
       if (this.state !== "running") return;
@@ -432,7 +428,6 @@ class TypingEngine {
       this.currentSecondErrors = 0;
       this.currentSecondKeystrokes = 0;
 
-      // Handle Time Limit countdown
       if (this.timeLimit > 0) {
         this.timeRemaining = Math.max(0, this.timeLimit - elapsedSeconds);
         if (this.liveTimerEl) this.liveTimerEl.textContent = `${this.timeRemaining}s`;
@@ -459,7 +454,6 @@ class TypingEngine {
   calculateMetrics() {
     const elapsedMinutes = Math.max(0.01, (performance.now() - (this.startTime || performance.now())) / 60000);
     
-    // Standard formula: (Correct Characters / 5) / TimeInMinutes
     const correctChars = this.correctKeystrokes;
     const totalChars = this.totalKeystrokes;
     
@@ -487,10 +481,8 @@ class TypingEngine {
     const variance = wpmValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / wpmValues.length;
     const standardDeviation = Math.sqrt(variance);
 
-    // Coefficient of variation based consistency percentage
     const cv = (standardDeviation / mean) * 100;
-    const consistency = Math.max(0, Math.min(100, Math.round(100 - cv)));
-    return consistency;
+    return Math.max(0, Math.min(100, Math.round(100 - cv)));
   }
 
   finish() {
@@ -507,7 +499,6 @@ class TypingEngine {
     const finalMetrics = this.calculateMetrics();
     const consistency = this.calculateConsistency();
 
-    // Ensure at least one timeline data point
     if (this.telemetryTimeline.length === 0) {
       this.telemetryTimeline.push({
         second: durationSeconds,
@@ -520,9 +511,10 @@ class TypingEngine {
 
     const result = {
       snippetId: this.snippet?.id || "custom",
-      snippetTitle: this.snippet?.title || "Custom C++ Snippet",
+      snippetTitle: this.snippet?.title || "Custom Snippet",
       category: this.snippet?.category || "custom",
       difficulty: this.snippet?.difficulty || "normal",
+      language: this.language || "cpp",
       mode: this.mode,
       wpm: finalMetrics.wpm,
       rawWpm: finalMetrics.rawWpm,

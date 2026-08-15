@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>cppType - Minimalist C++ Typing Speed Test</title>
+  <title>cppType - Minimalist Multi-Language Typing Speed Test</title>
   
   <!-- Modern Monospace Coding Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,7 +37,7 @@
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
         <span>history</span>
       </button>
-      <button class="nav-btn" id="nav-custom" title="Custom C++ Snippets">
+      <button class="nav-btn" id="nav-custom" title="Custom Code Snippets">
         <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
         <span>custom</span>
       </button>
@@ -53,25 +53,42 @@
     <!-- 1. TYPING TEST VIEW -->
     <div class="app-view active" id="test-view">
       
-      <!-- Monkeytype Mode Selection Pill Bar -->
+      <!-- Monkeytype Style Multi-Language & Mode Selection Bar -->
       <div class="mode-bar-container">
-        <div class="mode-bar">
-          <button class="mode-pill active" data-mode="snippet">@ snippets</button>
-          <button class="mode-pill" data-mode="time"># time</button>
-          <button class="mode-pill" data-mode="lines">_ lines</button>
-          <button class="mode-pill" data-mode="custom">custom</button>
+        
+        <div class="controls-row">
+          <!-- Language Selector Bar -->
+          <div class="lang-bar" id="lang-bar">
+            <button class="lang-pill active" data-lang="cpp">
+              <span class="lang-dot cpp"></span>C++
+            </button>
+            <button class="lang-pill" data-lang="python">
+              <span class="lang-dot python"></span>Python
+            </button>
+            <button class="lang-pill" data-lang="go">
+              <span class="lang-dot go"></span>Go
+            </button>
+            <button class="lang-pill" data-lang="cuda">
+              <span class="lang-dot cuda"></span>CUDA
+            </button>
+            <button class="lang-pill" data-lang="rust">
+              <span class="lang-dot rust"></span>Rust
+            </button>
+          </div>
+
+          <!-- Mode Selection Pill Bar -->
+          <div class="mode-bar">
+            <button class="mode-pill active" data-mode="snippet">@ snippets</button>
+            <button class="mode-pill" data-mode="time"># time</button>
+            <button class="mode-pill" data-mode="lines">_ lines</button>
+            <button class="mode-pill" data-mode="custom">custom</button>
+          </div>
         </div>
 
-        <!-- Sub-bars for Category / Time limits / Line limits -->
+        <!-- Dynamic Sub-bars for Categories / Time limits / Line limits -->
         <div class="sub-bar-container">
           <div class="sub-bar active" id="sub-bar-snippet">
-            <button class="sub-pill active" data-type="category" data-val="all">all</button>
-            <button class="sub-pill" data-type="category" data-val="dsa">dsa</button>
-            <button class="sub-pill" data-type="category" data-val="stl">stl</button>
-            <button class="sub-pill" data-type="category" data-val="cp">cp</button>
-            <button class="sub-pill" data-type="category" data-val="systems">systems</button>
-            <button class="sub-pill" data-type="category" data-val="oop">oop</button>
-            <button class="sub-pill" data-type="category" data-val="drills">drills</button>
+            <!-- Dynamically populated per language -->
           </div>
 
           <div class="sub-bar" id="sub-bar-time">
@@ -94,7 +111,7 @@
       <div class="test-top-bar">
         <div class="snippet-header-info">
           <span class="snippet-title" id="snippet-title">Binary Search</span>
-          <span class="snippet-category-badge" id="snippet-category">DSA • EASY</span>
+          <span class="snippet-category-badge" id="snippet-category">C++ • DSA • EASY</span>
         </div>
 
         <div class="live-counters-bar">
@@ -178,7 +195,7 @@
             <div class="sub-stat-item" style="margin-top: 10px;">
               <div class="sub-label">test type</div>
               <div class="sub-val" id="res-snippet-name" style="font-size: 14px; color: var(--main-color);">Binary Search</div>
-              <div class="text-sub" id="res-mode-info" style="font-size: 11px;">dsa • standard</div>
+              <div class="text-sub" id="res-mode-info" style="font-size: 11px;">C++ • dsa • standard</div>
             </div>
 
           </div>
@@ -198,11 +215,11 @@
 
         </div>
 
-        <!-- C++ Missed Syntax Characters Breakdown -->
+        <!-- Syntax Characters Breakdown (Adapts to Active Language) -->
         <div class="missed-symbols-section">
-          <div class="title">C++ Syntax Precision:</div>
+          <div class="title">Syntax Precision:</div>
           <div class="missed-badges-container" id="res-missed-symbols">
-            <span class="clean-run-badge">✨ 100% Flawless C++ Syntax Accuracy!</span>
+            <span class="clean-run-badge">✨ 100% Flawless Code Syntax Accuracy!</span>
           </div>
         </div>
 
@@ -275,7 +292,7 @@
             <thead>
               <tr>
                 <th>Date & Time</th>
-                <th>C++ Snippet</th>
+                <th>Snippet & Language</th>
                 <th>WPM</th>
                 <th>Raw</th>
                 <th>Accuracy</th>
@@ -307,6 +324,23 @@
 
       <div class="settings-group">
         
+        <!-- Default Language -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Default Language</div>
+            <div class="setting-desc">Primary programming language for speed tests</div>
+          </div>
+          <div class="setting-control">
+            <select id="setting-default-lang">
+              <option value="cpp">C++ (C++20)</option>
+              <option value="python">Python (Python 3.12)</option>
+              <option value="go">Go (Golang 1.22)</option>
+              <option value="cuda">CUDA (CUDA C++)</option>
+              <option value="rust">Rust (Rust 2024)</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Theme Selection -->
         <div class="setting-item">
           <div class="setting-info">
@@ -416,19 +450,30 @@
     <div class="modal-backdrop"></div>
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Custom C++ Snippets</h3>
+        <h3>Custom Code Snippets</h3>
         <button class="modal-close-btn">✕</button>
       </div>
 
       <div class="custom-snippets-container">
         <div class="form-group">
-          <label>Snippet Title</label>
-          <input type="text" id="custom-snippet-title" placeholder="e.g. My Fast I/O Routine" maxlength="40">
+          <label>Language</label>
+          <select id="custom-snippet-lang">
+            <option value="cpp">C++</option>
+            <option value="python">Python</option>
+            <option value="go">Go</option>
+            <option value="cuda">CUDA</option>
+            <option value="rust">Rust</option>
+          </select>
         </div>
 
         <div class="form-group">
-          <label>C++ Code</label>
-          <textarea id="custom-snippet-code" placeholder="Paste your C++ code here..."></textarea>
+          <label>Snippet Title</label>
+          <input type="text" id="custom-snippet-title" placeholder="e.g. My Custom Fast Routine" maxlength="40">
+        </div>
+
+        <div class="form-group">
+          <label>Source Code</label>
+          <textarea id="custom-snippet-code" placeholder="Paste your code snippet here..."></textarea>
         </div>
 
         <button class="btn-primary" id="btn-save-custom-snippet" style="justify-content: center;">
@@ -449,10 +494,10 @@
   <footer>
     <div class="footer-left">
       <span class="footer-link" id="footer-restart"><kbd style="background:var(--panel-bg); padding:2px 5px; border-radius:3px;">tab</kbd> restart</span>
-      <span class="footer-link"><kbd style="background:var(--panel-bg); padding:2px 5px; border-radius:3px;">esc</kbd> cancel/reset</span>
+      <span class="footer-link"><kbd style="background:var(--panel-bg); padding:2px 5px; border-radius:3px;">esc</kbd> reset</span>
     </div>
     <div class="footer-right">
-      <span class="text-sub">cppType • C++20 Speed Typing</span>
+      <span class="text-sub">cppType • Speed Coding Test</span>
     </div>
   </footer>
 

@@ -1,7 +1,7 @@
 /**
- * cppType - Main Application Controller
- * Handles UI views, keyboard routing, theme management,
- * modals, result dashboard rendering, and history views.
+ * cppType - Main Multi-Language Application Controller
+ * Handles UI views, keyboard routing, language switching (C++, Python, Go, CUDA, Rust),
+ * theme management, modals, result dashboard rendering, and history views.
  */
 
 class CppTypeApp {
@@ -12,6 +12,7 @@ class CppTypeApp {
     this.chart = null;
 
     // Active state
+    this.currentLanguage = this.storage.settings.language || "cpp";
     this.currentMode = this.storage.settings.mode || "snippet";
     this.currentCategory = this.storage.settings.category || "all";
     this.currentTimeLimit = this.storage.settings.timeLimit || 30;
@@ -30,10 +31,11 @@ class CppTypeApp {
     this.sound.setVolume(this.storage.settings.soundVolume);
 
     // 2. Initialize Chart & Engine
+    const langConfig = getLanguageConfig(this.currentLanguage);
     this.chart = new MonkeyChart("result-chart");
     this.engine = new TypingEngine({
       autoIndent: this.storage.settings.autoIndent,
-      indentSpaces: this.storage.settings.indentSpaces,
+      indentSpaces: langConfig.defaultIndent || 2,
       smoothLineScroll: this.storage.settings.smoothLineScroll,
       onStart: () => this.onTestStart(),
       onFinish: (res) => this.onTestFinish(res),
@@ -43,6 +45,8 @@ class CppTypeApp {
     // 3. Setup DOM & Event Listeners
     this._bindEvents();
     this._initSettingsUI();
+    this.renderCategorySubBar();
+    this._updateLanguageUI();
     this._updateModePills();
 
     // 4. Load initial snippet and focus
@@ -53,11 +57,9 @@ class CppTypeApp {
     document.documentElement.setAttribute("data-theme", themeName);
     this.storage.saveSettings({ theme: themeName });
     
-    // Update theme pill/selector if visible
     const themeSelect = document.getElementById("setting-theme");
     if (themeSelect) themeSelect.value = themeName;
 
-    // Redraw chart if on result screen
     if (this.chart && this.lastResult) {
       this.chart.render(this.lastResult, false);
     }
@@ -68,7 +70,6 @@ class CppTypeApp {
     root.style.setProperty("--font-family", `'${this.storage.settings.fontFamily}', monospace`);
     root.style.setProperty("--font-size", `${this.storage.settings.fontSize}px`);
 
-    // Apply Caret Style class
     const caretEl = document.getElementById("caret");
     if (caretEl) {
       caretEl.className = "caret " + (this.storage.settings.caretStyle || "caret-smooth");
@@ -102,7 +103,6 @@ class CppTypeApp {
 
     // Document level shortcuts
     document.addEventListener("keydown", (e) => {
-      // Allow Esc to close modal
       const isModalOpen = document.querySelector(".modal.active");
       if (isModalOpen) {
         if (e.key === "Escape") this.closeModals();
@@ -151,21 +151,27 @@ class CppTypeApp {
     document.getElementById("btn-copy-result")?.addEventListener("click", () => this.copyResultSummary());
     document.getElementById("btn-view-history")?.addEventListener("click", () => this.showView("history-view"));
 
+    // Language Pill Selection Handlers
+    document.querySelectorAll(".lang-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        const lang = pill.dataset.lang;
+        this.setLanguage(lang);
+      });
+    });
+
     // Mode Selector Click Handlers
     document.querySelectorAll(".mode-pill").forEach(pill => {
-      pill.addEventListener("click", (e) => {
+      pill.addEventListener("click", () => {
         const mode = pill.dataset.mode;
         this.setMode(mode);
       });
     });
 
-    // Sub-mode pill selectors (Category, Time limits, Line limits)
-    document.querySelectorAll(".sub-pill").forEach(pill => {
-      pill.addEventListener("click", (e) => {
+    // Sub-mode pill selectors (Time limits, Line limits)
+    document.querySelectorAll(".sub-pill[data-type='time'], .sub-pill[data-type='lines']").forEach(pill => {
+      pill.addEventListener("click", () => {
         const type = pill.dataset.type;
         const val = pill.dataset.val;
-
-        if (type === "category") this.setCategory(val);
         if (type === "time") this.setTimeLimit(parseInt(val, 10));
         if (type === "lines") this.setLineLimit(parseInt(val, 10));
       });
@@ -179,7 +185,6 @@ class CppTypeApp {
   }
 
   _handleGlobalKeyDown(e) {
-    // If typing test is visible, route keys to engine
     const testView = document.getElementById("test-view");
     if (!testView.classList.contains("active")) return;
 
@@ -216,6 +221,72 @@ class CppTypeApp {
     }
   }
 
+  setLanguage(lang) {
+    if (!LANGUAGES_CONFIG[lang]) return;
+    this.currentLanguage = lang;
+    this.currentCategory = "all";
+    this.storage.saveSettings({ language: lang, category: "all" });
+
+    // Update indentation for language
+    const cfg = getLanguageConfig(lang);
+    if (this.engine) {
+      this.engine.options.indentSpaces = cfg.defaultIndent || 2;
+    }
+
+    this._updateLanguageUI();
+    this.renderCategorySubBar();
+    this.startNewTest();
+  }
+
+  _updateLanguageUI() {
+    const cfg = getLanguageConfig(this.currentLanguage);
+
+    // Update active pill in language bar
+    document.querySelectorAll(".lang-pill").forEach(p => {
+      p.classList.toggle("active", p.dataset.lang === this.currentLanguage);
+    });
+
+    // Update Logo Area & Subtitle
+    const logoTextEl = document.querySelector(".logo-text");
+    const logoSubEl = document.querySelector(".logo-sub");
+    const footerSubEl = document.querySelector(".footer-right .text-sub");
+
+    if (logoTextEl) {
+      logoTextEl.innerHTML = `${cfg.logoPrefix}<span class="highlight">type</span>`;
+    }
+    if (logoSubEl) {
+      logoSubEl.textContent = cfg.versionBadge;
+    }
+    if (footerSubEl) {
+      footerSubEl.textContent = `${cfg.name} • Speed Coding Test`;
+    }
+
+    // Update document title
+    document.title = `${cfg.name}Type - Minimalist ${cfg.name} Typing Speed Test`;
+  }
+
+  renderCategorySubBar() {
+    const subBar = document.getElementById("sub-bar-snippet");
+    if (!subBar) return;
+    subBar.innerHTML = "";
+
+    const categories = getCategoriesForLanguage(this.currentLanguage);
+
+    categories.forEach(cat => {
+      const btn = document.createElement("button");
+      btn.className = `sub-pill ${cat.id === this.currentCategory ? "active" : ""}`;
+      btn.dataset.type = "category";
+      btn.dataset.val = cat.id;
+      btn.textContent = cat.label;
+
+      btn.addEventListener("click", () => {
+        this.setCategory(cat.id);
+      });
+
+      subBar.appendChild(btn);
+    });
+  }
+
   setMode(mode) {
     this.currentMode = mode;
     this.storage.saveSettings({ mode });
@@ -245,12 +316,10 @@ class CppTypeApp {
   }
 
   _updateModePills() {
-    // Update main mode pills
     document.querySelectorAll(".mode-pill").forEach(p => {
       p.classList.toggle("active", p.dataset.mode === this.currentMode);
     });
 
-    // Toggle sub-bars visibility
     document.querySelectorAll(".sub-bar").forEach(bar => {
       bar.classList.remove("active");
     });
@@ -258,14 +327,17 @@ class CppTypeApp {
     const activeSubBar = document.getElementById(`sub-bar-${this.currentMode}`);
     if (activeSubBar) activeSubBar.classList.add("active");
 
-    // Update active sub-pills
-    document.querySelectorAll(".sub-pill").forEach(p => {
-      const type = p.dataset.type;
-      const val = p.dataset.val;
+    // Update category sub-pills
+    document.querySelectorAll("#sub-bar-snippet .sub-pill").forEach(p => {
+      p.classList.toggle("active", p.dataset.val === this.currentCategory);
+    });
 
-      if (type === "category") p.classList.toggle("active", val === this.currentCategory);
-      if (type === "time") p.classList.toggle("active", parseInt(val, 10) === this.currentTimeLimit);
-      if (type === "lines") p.classList.toggle("active", parseInt(val, 10) === this.currentLineLimit);
+    // Update time and lines sub-pills
+    document.querySelectorAll(".sub-pill[data-type='time']").forEach(p => {
+      p.classList.toggle("active", parseInt(p.dataset.val, 10) === this.currentTimeLimit);
+    });
+    document.querySelectorAll(".sub-pill[data-type='lines']").forEach(p => {
+      p.classList.toggle("active", parseInt(p.dataset.val, 10) === this.currentLineLimit);
     });
   }
 
@@ -274,31 +346,31 @@ class CppTypeApp {
     this._hideFocusWarning();
     document.body.classList.remove("zen-mode");
 
-    // Get snippet
+    const langCfg = getLanguageConfig(this.currentLanguage);
+
     if (this.currentMode === "custom") {
-      const customList = this.storage.getCustomSnippets();
+      const customList = this.storage.getCustomSnippets(this.currentLanguage);
       if (customList.length > 0) {
         this.currentSnippet = customList[0];
       } else {
-        this.currentSnippet = getRandomSnippet(this.currentCategory);
+        this.currentSnippet = getRandomSnippet(this.currentCategory, this.currentLanguage);
       }
     } else {
-      this.currentSnippet = getRandomSnippet(this.currentCategory);
+      this.currentSnippet = getRandomSnippet(this.currentCategory, this.currentLanguage);
     }
 
-    // Set snippet metadata badges
     const titleEl = document.getElementById("snippet-title");
     const metaEl = document.getElementById("snippet-category");
     if (titleEl) titleEl.textContent = this.currentSnippet.title;
-    if (metaEl) metaEl.textContent = `${this.currentSnippet.category.toUpperCase()} • ${this.currentSnippet.difficulty.toUpperCase()}`;
+    if (metaEl) {
+      metaEl.textContent = `${langCfg.name.toUpperCase()} • ${this.currentSnippet.category.toUpperCase()} • ${this.currentSnippet.difficulty.toUpperCase()}`;
+    }
 
-    // Load snippet into engine
     const limit = this.currentMode === "time" ? this.currentTimeLimit : 
                   this.currentMode === "lines" ? this.currentLineLimit : 0;
     
-    this.engine.loadSnippet(this.currentSnippet, this.currentMode, limit);
+    this.engine.loadSnippet(this.currentSnippet, this.currentMode, limit, this.currentLanguage);
 
-    // Focus input
     setTimeout(() => {
       document.getElementById("hidden-input")?.focus();
     }, 50);
@@ -312,7 +384,7 @@ class CppTypeApp {
     const limit = this.currentMode === "time" ? this.currentTimeLimit : 
                   this.currentMode === "lines" ? this.currentLineLimit : 0;
     
-    this.engine.loadSnippet(this.currentSnippet, this.currentMode, limit);
+    this.engine.loadSnippet(this.currentSnippet, this.currentMode, limit, this.currentLanguage);
 
     setTimeout(() => {
       document.getElementById("hidden-input")?.focus();
@@ -324,27 +396,25 @@ class CppTypeApp {
   }
 
   onTestTick(second, stats) {
-    // Engine updates live counters automatically
+    // Live stats update automatically
   }
 
   onTestFinish(result) {
     document.body.classList.remove("zen-mode");
+    result.language = this.currentLanguage;
     this.lastResult = result;
 
-    // Save to persistent storage
     this.storage.saveResult(result);
-
-    // Show result dashboard
     this.renderResultDashboard(result);
     this.showView("result-view");
   }
 
   renderResultDashboard(res) {
-    // Large Headline Numbers
+    const langCfg = getLanguageConfig(res.language || this.currentLanguage);
+
     document.getElementById("res-wpm").textContent = res.wpm;
     document.getElementById("res-accuracy").textContent = `${res.accuracy}%`;
 
-    // Secondary Grid
     document.getElementById("res-raw-wpm").textContent = res.rawWpm;
     document.getElementById("res-consistency").textContent = `${res.consistency}%`;
     document.getElementById("res-time").textContent = `${res.duration}s`;
@@ -352,11 +422,15 @@ class CppTypeApp {
     const chars = res.characters || {};
     document.getElementById("res-chars").textContent = `${chars.correct || 0} / ${chars.incorrect || 0} / 0 / 0`;
 
-    // Snippet Details
     document.getElementById("res-snippet-name").textContent = res.snippetTitle;
-    document.getElementById("res-mode-info").textContent = `${res.mode} • ${res.category}`;
+    document.getElementById("res-mode-info").textContent = `${langCfg.name} • ${res.mode} • ${res.category}`;
 
-    // Render Missed Symbols Badges (C++ Specific!)
+    // Update Syntax Precision title
+    const syntaxTitleEl = document.querySelector(".missed-symbols-section .title");
+    if (syntaxTitleEl) {
+      syntaxTitleEl.textContent = `${langCfg.syntaxLabel || "Syntax Precision"}:`;
+    }
+
     const missedContainer = document.getElementById("res-missed-symbols");
     if (missedContainer) {
       missedContainer.innerHTML = "";
@@ -364,7 +438,7 @@ class CppTypeApp {
       const entries = Object.entries(missedMap).sort((a, b) => b[1] - a[1]);
 
       if (entries.length === 0) {
-        missedContainer.innerHTML = `<span class="clean-run-badge">✨ 100% Flawless C++ Syntax Accuracy!</span>`;
+        missedContainer.innerHTML = `<span class="clean-run-badge">✨ 100% Flawless ${langCfg.name} Syntax Accuracy!</span>`;
       } else {
         entries.slice(0, 6).forEach(([char, count]) => {
           const badge = document.createElement("span");
@@ -375,7 +449,6 @@ class CppTypeApp {
       }
     }
 
-    // Render Canvas Chart with animated curves
     setTimeout(() => {
       this.chart.render(res, true);
     }, 100);
@@ -384,13 +457,15 @@ class CppTypeApp {
   copyResultSummary() {
     if (!this.lastResult) return;
     const r = this.lastResult;
-    const text = `cppType Test Result:
+    const langCfg = getLanguageConfig(r.language || this.currentLanguage);
+
+    const text = `${langCfg.name} Typing Result:
 ⚡ WPM: ${r.wpm} (Raw: ${r.rawWpm})
 🎯 Accuracy: ${r.accuracy}%
 📊 Consistency: ${r.consistency}%
 ⏱️ Time: ${r.duration}s
-💻 Snippet: ${r.snippetTitle} (${r.category})
-Try C++ Typing at cppType!`;
+💻 Snippet: ${r.snippetTitle} (${langCfg.name} • ${r.category})
+Try Speed Coding at cppType!`;
 
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById("btn-copy-result");
@@ -406,7 +481,6 @@ Try C++ Typing at cppType!`;
     const stats = this.storage.getLifetimeStats();
     const history = this.storage.getHistory();
 
-    // 1. Fill Lifetime Stat Cards
     document.getElementById("stat-total-tests").textContent = stats.totalTests;
     document.getElementById("stat-best-wpm").textContent = stats.bestWpm;
     document.getElementById("stat-avg-wpm").textContent = stats.avgWpm;
@@ -417,7 +491,6 @@ Try C++ Typing at cppType!`;
     document.getElementById("stat-total-time").textContent = `${minutes}m ${seconds}s`;
     document.getElementById("stat-total-chars").textContent = (stats.totalCharacters || 0).toLocaleString();
 
-    // 2. Render History Table
     const tableBody = document.getElementById("history-table-body");
     if (!tableBody) return;
     tableBody.innerHTML = "";
@@ -427,14 +500,19 @@ Try C++ Typing at cppType!`;
       return;
     }
 
-    history.slice(0, 50).forEach((item, idx) => {
+    history.slice(0, 50).forEach((item) => {
       const tr = document.createElement("tr");
       const date = new Date(item.timestamp);
       const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+      const langCfg = getLanguageConfig(item.language || "cpp");
 
       tr.innerHTML = `
         <td class="col-date">${formattedDate}</td>
-        <td class="col-snippet"><strong>${item.snippetTitle || "C++ Snippet"}</strong> <span class="tag">${item.category}</span></td>
+        <td class="col-snippet">
+          <span class="tag-lang tag-${item.language || 'cpp'}">${langCfg.name}</span>
+          <strong>${item.snippetTitle || "Snippet"}</strong> 
+          <span class="tag">${item.category}</span>
+        </td>
         <td class="col-wpm font-bold text-main">${item.wpm}</td>
         <td class="col-raw text-sub">${item.rawWpm}</td>
         <td class="col-acc">${item.accuracy}%</td>
@@ -453,7 +531,6 @@ Try C++ Typing at cppType!`;
       tableBody.appendChild(tr);
     });
 
-    // Clear History Button
     document.getElementById("btn-clear-history")?.addEventListener("click", () => {
       if (confirm("Are you sure you want to clear all typing history? This cannot be undone.")) {
         this.storage.clearAllHistory();
@@ -461,7 +538,6 @@ Try C++ Typing at cppType!`;
       }
     });
 
-    // Export Data Button
     document.getElementById("btn-export-data")?.addEventListener("click", () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(this.storage.exportData());
       const downloadAnchor = document.createElement("a");
@@ -473,11 +549,17 @@ Try C++ Typing at cppType!`;
     });
   }
 
-  // ==========================================
-  // MODALS & SETTINGS
-  // ==========================================
   _initSettingsUI() {
     const s = this.storage.settings;
+
+    // Default Language
+    const langSelect = document.getElementById("setting-default-lang");
+    if (langSelect) {
+      langSelect.value = s.language || "cpp";
+      langSelect.addEventListener("change", (e) => {
+        this.setLanguage(e.target.value);
+      });
+    }
 
     // Theme selector
     const themeSelect = document.getElementById("setting-theme");
@@ -567,63 +649,75 @@ Try C++ Typing at cppType!`;
     this.closeModals();
     document.getElementById("modal-custom")?.classList.add("active");
 
-    // Load custom snippets list
-    const listEl = document.getElementById("custom-snippets-list");
-    if (listEl) {
-      const items = this.storage.getCustomSnippets();
-      listEl.innerHTML = "";
-      if (items.length === 0) {
-        listEl.innerHTML = `<div class="empty-state-sm">No custom snippets added yet.</div>`;
-      } else {
-        items.forEach(item => {
-          const div = document.createElement("div");
-          div.className = "custom-snippet-item";
-          div.innerHTML = `
-            <div class="info">
-              <span class="name">${item.title}</span>
-              <span class="lines">${item.code.split("\n").length} lines</span>
-            </div>
-            <div class="actions">
-              <button class="btn-play-snippet" data-id="${item.id}">Start</button>
-              <button class="btn-del-snippet" data-id="${item.id}">✕</button>
-            </div>
-          `;
+    const langSelect = document.getElementById("custom-snippet-lang");
+    if (langSelect) langSelect.value = this.currentLanguage;
 
-          div.querySelector(".btn-play-snippet")?.addEventListener("click", () => {
-            this.currentSnippet = item;
-            this.currentMode = "custom";
-            this.closeModals();
-            this.showView("test-view");
-            this.engine.loadSnippet(item, "custom", 0);
-          });
+    this._renderCustomSnippetsList();
 
-          div.querySelector(".btn-del-snippet")?.addEventListener("click", () => {
-            this.storage.deleteCustomSnippet(item.id);
-            this.openCustomModal();
-          });
-
-          listEl.appendChild(div);
-        });
-      }
-    }
-
-    // Handle Custom Snippet Save
     const saveBtn = document.getElementById("btn-save-custom-snippet");
     if (saveBtn) {
       saveBtn.onclick = () => {
-        const title = document.getElementById("custom-snippet-title").value.trim() || "My C++ Function";
+        const lang = document.getElementById("custom-snippet-lang")?.value || this.currentLanguage;
+        const title = document.getElementById("custom-snippet-title").value.trim() || `My ${getLanguageConfig(lang).name} Snippet`;
         const code = document.getElementById("custom-snippet-code").value.trim();
         if (!code) {
-          alert("Please paste valid C++ code.");
+          alert("Please paste valid code.");
           return;
         }
-        const newSnippet = this.storage.saveCustomSnippet({ title, code });
+        const newSnippet = this.storage.saveCustomSnippet({ title, code, language: lang });
         this.currentSnippet = newSnippet;
         this.currentMode = "custom";
+        this.currentLanguage = lang;
+        this._updateLanguageUI();
         this.closeModals();
         this.showView("test-view");
-        this.engine.loadSnippet(newSnippet, "custom", 0);
+        this.engine.loadSnippet(newSnippet, "custom", 0, lang);
       };
+    }
+  }
+
+  _renderCustomSnippetsList() {
+    const listEl = document.getElementById("custom-snippets-list");
+    if (!listEl) return;
+    
+    const items = this.storage.getCustomSnippets();
+    listEl.innerHTML = "";
+    if (items.length === 0) {
+      listEl.innerHTML = `<div class="empty-state-sm">No custom snippets added yet.</div>`;
+    } else {
+      items.forEach(item => {
+        const langCfg = getLanguageConfig(item.language || "cpp");
+        const div = document.createElement("div");
+        div.className = "custom-snippet-item";
+        div.innerHTML = `
+          <div class="info">
+            <span class="tag-lang tag-${item.language || 'cpp'}">${langCfg.name}</span>
+            <span class="name">${item.title}</span>
+            <span class="lines">${item.code.split("\n").length} lines</span>
+          </div>
+          <div class="actions">
+            <button class="btn-play-snippet" data-id="${item.id}">Start</button>
+            <button class="btn-del-snippet" data-id="${item.id}">✕</button>
+          </div>
+        `;
+
+        div.querySelector(".btn-play-snippet")?.addEventListener("click", () => {
+          this.currentSnippet = item;
+          this.currentMode = "custom";
+          this.currentLanguage = item.language || "cpp";
+          this._updateLanguageUI();
+          this.closeModals();
+          this.showView("test-view");
+          this.engine.loadSnippet(item, "custom", 0, this.currentLanguage);
+        });
+
+        div.querySelector(".btn-del-snippet")?.addEventListener("click", () => {
+          this.storage.deleteCustomSnippet(item.id);
+          this._renderCustomSnippetsList();
+        });
+
+        listEl.appendChild(div);
+      });
     }
   }
 
