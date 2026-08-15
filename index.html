@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="serika-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cppType - Minimalist C++ Typing Speed Test</title>
+  
+  <!-- Modern Monospace Coding Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Hidden input to capture physical keyboard events without visual disruption -->
+  <input type="text" id="hidden-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" autofocus>
+
+  <!-- HEADER & NAVIGATION -->
+  <header>
+    <div class="logo-area" id="nav-test" title="Go to Typing Test">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H9v-2h6v2zm0-3H9v-2h6v2zm-7 3H5v-2h3v2zm0-3H5v-2h3v2zm0-3H5V9h3v2zm4-3H9V6h3v2zm4 0h-3V6h3v2zm4 9h-3v-2h3v2zm0-3h-3v-2h3v2zm0-3h-3V9h3v2z"/>
+        </svg>
+      </div>
+      <div class="logo-text">cpp<span class="highlight">type</span></div>
+      <span class="logo-sub">C++20</span>
+    </div>
+
+    <nav>
+      <button class="nav-btn" id="nav-restart" title="Quick Restart (Tab / Esc)">
+        <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      </button>
+      <button class="nav-btn" id="nav-history" title="Test History & Analytics">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+        <span>history</span>
+      </button>
+      <button class="nav-btn" id="nav-custom" title="Custom C++ Snippets">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+        <span>custom</span>
+      </button>
+      <button class="nav-btn" id="nav-settings" title="Settings & Themes">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main>
+
+    <!-- 1. TYPING TEST VIEW -->
+    <div class="app-view active" id="test-view">
+      
+      <!-- Monkeytype Mode Selection Pill Bar -->
+      <div class="mode-bar-container">
+        <div class="mode-bar">
+          <button class="mode-pill active" data-mode="snippet">@ snippets</button>
+          <button class="mode-pill" data-mode="time"># time</button>
+          <button class="mode-pill" data-mode="lines">_ lines</button>
+          <button class="mode-pill" data-mode="custom">custom</button>
+        </div>
+
+        <!-- Sub-bars for Category / Time limits / Line limits -->
+        <div class="sub-bar-container">
+          <div class="sub-bar active" id="sub-bar-snippet">
+            <button class="sub-pill active" data-type="category" data-val="all">all</button>
+            <button class="sub-pill" data-type="category" data-val="dsa">dsa</button>
+            <button class="sub-pill" data-type="category" data-val="stl">stl</button>
+            <button class="sub-pill" data-type="category" data-val="cp">cp</button>
+            <button class="sub-pill" data-type="category" data-val="systems">systems</button>
+            <button class="sub-pill" data-type="category" data-val="oop">oop</button>
+            <button class="sub-pill" data-type="category" data-val="drills">drills</button>
+          </div>
+
+          <div class="sub-bar" id="sub-bar-time">
+            <button class="sub-pill" data-type="time" data-val="15">15s</button>
+            <button class="sub-pill active" data-type="time" data-val="30">30s</button>
+            <button class="sub-pill" data-type="time" data-val="60">60s</button>
+            <button class="sub-pill" data-type="time" data-val="120">120s</button>
+          </div>
+
+          <div class="sub-bar" id="sub-bar-lines">
+            <button class="sub-pill" data-type="lines" data-val="5">5</button>
+            <button class="sub-pill active" data-type="lines" data-val="10">10</button>
+            <button class="sub-pill" data-type="lines" data-val="15">15</button>
+            <button class="sub-pill" data-type="lines" data-val="25">25</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Top Header: Snippet Info & Live Counters -->
+      <div class="test-top-bar">
+        <div class="snippet-header-info">
+          <span class="snippet-title" id="snippet-title">Binary Search</span>
+          <span class="snippet-category-badge" id="snippet-category">DSA • EASY</span>
+        </div>
+
+        <div class="live-counters-bar">
+          <div class="live-counter-item">
+            <span class="label">wpm</span>
+            <span id="live-wpm-val">0</span>
+          </div>
+          <div class="live-counter-item">
+            <span class="label">acc</span>
+            <span id="live-acc-val">100%</span>
+          </div>
+          <div class="live-counter-item">
+            <span class="label">time</span>
+            <span id="live-timer-val">0s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Typing Box Container -->
+      <div class="typing-wrapper" id="typing-wrapper">
+        <!-- Smooth Animated Caret -->
+        <div class="caret caret-smooth" id="caret"></div>
+
+        <!-- Rendered Code Characters -->
+        <div class="words-container" id="words-container"></div>
+
+        <!-- Focus Lost Warning Overlay -->
+        <div class="focus-warning" id="focus-warning">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <div>Click or press any key to focus</div>
+        </div>
+      </div>
+
+      <!-- Restart Hint -->
+      <div class="restart-hint">
+        <span>restart test</span>
+        <kbd>tab</kbd> or <kbd>esc</kbd>
+      </div>
+
+    </div>
+
+    <!-- 2. RESULT DASHBOARD VIEW -->
+    <div class="app-view" id="result-view">
+      <div class="result-container">
+        
+        <!-- Main Stats Grid -->
+        <div class="result-main-grid">
+          
+          <!-- Left Column: Big Headline Numbers & Secondary Stats -->
+          <div class="result-stats-column">
+            
+            <div class="hero-stat-block">
+              <div class="stat-label">wpm</div>
+              <div class="stat-value" id="res-wpm">0</div>
+            </div>
+
+            <div class="hero-stat-block secondary">
+              <div class="stat-label">acc</div>
+              <div class="stat-value" id="res-accuracy">100%</div>
+            </div>
+
+            <div class="secondary-stats-grid">
+              <div class="sub-stat-item">
+                <div class="sub-label">raw</div>
+                <div class="sub-val" id="res-raw-wpm">0</div>
+              </div>
+              <div class="sub-stat-item">
+                <div class="sub-label">characters</div>
+                <div class="sub-val" id="res-chars">0/0/0/0</div>
+              </div>
+              <div class="sub-stat-item">
+                <div class="sub-label">consistency</div>
+                <div class="sub-val" id="res-consistency">0%</div>
+              </div>
+              <div class="sub-stat-item">
+                <div class="sub-label">time</div>
+                <div class="sub-val" id="res-time">0s</div>
+              </div>
+            </div>
+
+            <div class="sub-stat-item" style="margin-top: 10px;">
+              <div class="sub-label">test type</div>
+              <div class="sub-val" id="res-snippet-name" style="font-size: 14px; color: var(--main-color);">Binary Search</div>
+              <div class="text-sub" id="res-mode-info" style="font-size: 11px;">dsa • standard</div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Interactive Dual-Axis Canvas Chart -->
+          <div class="result-chart-wrapper">
+            <div class="chart-header">
+              <span>Telemetry & Performance Graph</span>
+              <div class="chart-legend">
+                <div class="legend-item"><span class="legend-dot wpm"></span> wpm</div>
+                <div class="legend-item"><span class="legend-dot raw"></span> raw</div>
+                <div class="legend-item"><span class="legend-dot err"></span> errors</div>
+              </div>
+            </div>
+            <canvas id="result-chart"></canvas>
+          </div>
+
+        </div>
+
+        <!-- C++ Missed Syntax Characters Breakdown -->
+        <div class="missed-symbols-section">
+          <div class="title">C++ Syntax Precision:</div>
+          <div class="missed-badges-container" id="res-missed-symbols">
+            <span class="clean-run-badge">✨ 100% Flawless C++ Syntax Accuracy!</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="result-actions-bar">
+          <button class="btn-primary" id="btn-next-test">
+            <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+            <span>Next Test (Tab + Enter)</span>
+          </button>
+          <button class="btn-secondary" id="btn-repeat-test">
+            <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            <span>Repeat Test</span>
+          </button>
+          <button class="btn-secondary" id="btn-copy-result">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            <span>Copy Summary</span>
+          </button>
+          <button class="btn-secondary" id="btn-view-history">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+            <span>All History</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. FULL HISTORY & ANALYTICS VIEW -->
+    <div class="app-view" id="history-view">
+      <div class="history-container">
+        
+        <div class="history-header">
+          <h2>Lifetime Analytics & History</h2>
+          <div class="history-header-actions">
+            <button class="btn-secondary" id="btn-export-data">Export JSON</button>
+            <button class="btn-secondary" id="btn-clear-history" style="color: var(--error-color);">Clear History</button>
+          </div>
+        </div>
+
+        <!-- 6 Summary Stat Cards -->
+        <div class="lifetime-stats-grid">
+          <div class="stat-card">
+            <div class="card-label">tests completed</div>
+            <div class="card-val" id="stat-total-tests">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-label">best wpm</div>
+            <div class="card-val" id="stat-best-wpm">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-label">avg wpm</div>
+            <div class="card-val" id="stat-avg-wpm">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-label">avg accuracy</div>
+            <div class="card-val" id="stat-avg-acc">0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-label">time typing</div>
+            <div class="card-val" id="stat-total-time">0m 0s</div>
+          </div>
+          <div class="stat-card">
+            <div class="card-label">total chars</div>
+            <div class="card-val" id="stat-total-chars">0</div>
+          </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>C++ Snippet</th>
+                <th>WPM</th>
+                <th>Raw</th>
+                <th>Accuracy</th>
+                <th>Consistency</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Settings Modal -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Settings & Preferences</h3>
+        <button class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="settings-group">
+        
+        <!-- Theme Selection -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Theme Palette</div>
+            <div class="setting-desc">Warm minimal Monkeytype color themes</div>
+          </div>
+          <div class="setting-control">
+            <select id="setting-theme">
+              <option value="serika-dark">Serika Dark (Warm Charcoal & Gold)</option>
+              <option value="gruvbox-dark">Gruvbox Dark (Warm Earth & Yellow)</option>
+              <option value="amber-glow">Amber Glow (Retro Warm CRT)</option>
+              <option value="espresso-warm">Espresso Warm (Mocha & Sand)</option>
+              <option value="nord-slate">Nord Slate (Subtle Slate & Frost)</option>
+              <option value="carbon">Carbon (Deep Minimal)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Keyboard Sounds -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Keyboard Audio</div>
+            <div class="setting-desc">Real-time Web Audio switch synthesis</div>
+          </div>
+          <div class="setting-control" style="display: flex; gap: 8px;">
+            <select id="setting-sound-type">
+              <option value="thock">Thock (Deep Tactile)</option>
+              <option value="click">Click (Blue Switch)</option>
+              <option value="clack">Clack (Linear)</option>
+              <option value="beep">Beep (Terminal)</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Audio Volume -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Audio Volume</div>
+            <div class="setting-desc">Keystroke feedback loudness</div>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="setting-sound-vol" min="0" max="100" value="35" style="width: 120px;">
+          </div>
+        </div>
+
+        <!-- Caret Style -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Caret Style</div>
+            <div class="setting-desc">Smooth sliding cursor appearance</div>
+          </div>
+          <div class="setting-control">
+            <select id="setting-caret-style">
+              <option value="caret-smooth">Smooth Line (|)</option>
+              <option value="caret-block">Block (█)</option>
+              <option value="caret-underline">Underline (_)</option>
+              <option value="caret-box">Box (▢)</option>
+              <option value="caret-off">Off</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Font Family -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Font Family</div>
+            <div class="setting-desc">Monospaced programmer typography</div>
+          </div>
+          <div class="setting-control">
+            <select id="setting-font">
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Fira Code">Fira Code</option>
+              <option value="monospace">System Monospace</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Font Size -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Font Size</div>
+            <div class="setting-desc">Code character scale (<span id="setting-font-size-val">19px</span>)</div>
+          </div>
+          <div class="setting-control">
+            <input type="range" id="setting-font-size" min="14" max="26" value="19" style="width: 120px;">
+          </div>
+        </div>
+
+        <!-- Auto-indent -->
+        <div class="setting-item">
+          <div class="setting-info">
+            <div class="setting-title">Auto Indent</div>
+            <div class="setting-desc">Automatically advance cursor past leading line spaces on Enter</div>
+          </div>
+          <div class="setting-control">
+            <input type="checkbox" id="setting-auto-indent" checked style="width: 18px; height: 18px;">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Snippets Modal -->
+  <div class="modal" id="modal-custom">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Custom C++ Snippets</h3>
+        <button class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="custom-snippets-container">
+        <div class="form-group">
+          <label>Snippet Title</label>
+          <input type="text" id="custom-snippet-title" placeholder="e.g. My Fast I/O Routine" maxlength="40">
+        </div>
+
+        <div class="form-group">
+          <label>C++ Code</label>
+          <textarea id="custom-snippet-code" placeholder="Paste your C++ code here..."></textarea>
+        </div>
+
+        <button class="btn-primary" id="btn-save-custom-snippet" style="justify-content: center;">
+          <span>Save & Start Typing</span>
+        </button>
+
+        <hr style="border: none; border-top: 1px solid var(--panel-border); margin: 8px 0;">
+
+        <div class="setting-title">Saved Custom Snippets</div>
+        <div id="custom-snippets-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">
+      <span class="footer-link" id="footer-restart"><kbd style="background:var(--panel-bg); padding:2px 5px; border-radius:3px;">tab</kbd> restart</span>
+      <span class="footer-link"><kbd style="background:var(--panel-bg); padding:2px 5px; border-radius:3px;">esc</kbd> cancel/reset</span>
+    </div>
+    <div class="footer-right">
+      <span class="text-sub">cppType • C++20 Speed Typing</span>
+    </div>
+  </footer>
+
+  <!-- APPLICATION SCRIPTS -->
+  <script src="js/snippets.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
