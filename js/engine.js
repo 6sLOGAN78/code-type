@@ -377,7 +377,7 @@ class TypingEngine {
       const lastSpan = this.container.querySelector(`.char[data-index="${this.characters.length - 1}"]`);
       if (lastSpan) {
         const rect = lastSpan.getBoundingClientRect();
-        const containerRect = this.container.getBoundingClientRect();
+        const containerRect = (this.caret.offsetParent || this.container).getBoundingClientRect();
         this.caret.style.transform = `translate3d(${rect.right - containerRect.left}px, ${rect.top - containerRect.top}px, 0)`;
         this.caret.style.height = `${rect.height}px`;
       }
@@ -385,7 +385,9 @@ class TypingEngine {
     }
 
     const rect = targetSpan.getBoundingClientRect();
-    const containerRect = this.container.getBoundingClientRect();
+    // Measure relative to the caret's positioning parent (.typing-wrapper), not
+    // #words-container: the wrapper's padding would otherwise offset the caret.
+    const containerRect = (this.caret.offsetParent || this.container).getBoundingClientRect();
 
     const left = rect.left - containerRect.left;
     const top = rect.top - containerRect.top;
